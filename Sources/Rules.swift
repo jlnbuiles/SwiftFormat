@@ -6450,21 +6450,18 @@ public struct _FormatRules {
                     }
                 }
 
-                // If the closure calls a single function, which returns `Never`,
+                // If the closure calls a single function, which throws or returns `Never`,
                 // then removing the closure will cause a compilation failure.
                 //  - We maintain a list of known functions that return `Never`.
                 //    We could expand this to be user-provided if necessary.
-                let knownFunctionsThatReturnNever: Set<String> = [
-                    "fatalError",
-                    "preconditionFailure",
-                ]
-
                 for i in closureStartIndex ... closureEndIndex {
-                    if case let .identifier(identifier) = formatter.tokens[i],
-                       knownFunctionsThatReturnNever.contains(identifier),
-                       formatter.isInMainClosureBody(index: i, closureStartIndex: closureStartIndex)
-                    {
-                        return
+                    switch formatter.tokens[i] {
+                    case .identifier("fatalError"), .identifier("preconditionFailure"), .keyword("throw"):
+                        if formatter.isInMainClosureBody(index: i, closureStartIndex: closureStartIndex) {
+                            return
+                        }
+                    default:
+                        break
                     }
                 }
 
